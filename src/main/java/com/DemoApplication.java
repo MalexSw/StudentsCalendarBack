@@ -4,6 +4,7 @@ import java.util.Scanner;
 
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+import com.postgresq.tools.DatabaseSeeder;
 import com.tools.apiInit;
 
 @SpringBootApplication
@@ -21,6 +22,7 @@ public class DemoApplication {
                 case "help":
                     System.out.println("Commands:");
                     System.out.println("  start-api      - Start dummy API");
+                    System.out.println("  seed-db        - Seed sample calendars and events");
                     System.out.println("  stop-api       - Stop dummy API");
                     System.out.println("  create-table   - Create a test table in PostgreSQL");
                     System.out.println("  insert-test    - Insert sample data");
@@ -30,6 +32,10 @@ public class DemoApplication {
 
                 case "start-api":
                     apiInit.initAPI();
+                    break;
+
+                case "seed-db":
+                    DatabaseSeeder.seedAndPrint();
                     break;
 
                 case "stop-api":

@@ -1,26 +1,28 @@
 package com.postgresq.service;
 
-import com.postgresq.model.*;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.Persistence;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+
+import com.postgresq.model.Calendar;
+import com.postgresq.model.User;
+import com.postgresq.persistence.JpaContext;
+
+import jakarta.persistence.EntityManager;
 
 public class BasicUserService {
 
-    private static final EntityManagerFactory emf = Persistence.createEntityManagerFactory("calendarPU");
-
-    public static User createUser(String username, String email, String password) {
-        EntityManager em = emf.createEntityManager();
+    public static User createUser(String name, String surname, String email, String password, Optional<LocalDateTime> timezone) {
+        EntityManager em = JpaContext.createEntityManager();
         em.getTransaction().begin();
 
         User user = new User();
-        user.setId(UUID.randomUUID());
-        user.setName(username);
+        user.setName(name);
+        user.setSurname(surname);
         user.setEmail(email);
         user.setPasswordHash(password);
+        user.setTimezone(timezone.orElse(LocalDateTime.now()));
 
         em.persist(user);
         em.getTransaction().commit();
@@ -28,8 +30,8 @@ public class BasicUserService {
         return user;
     }
 
-    public static void addCalendarToUser(Long userId, Calendar calendar) {
-        EntityManager em = emf.createEntityManager();
+    public static void addCalendarToUser(UUID userId, Calendar calendar) {
+        EntityManager em = JpaContext.createEntityManager();
         em.getTransaction().begin();
 
         User user = em.find(User.class, userId);
@@ -39,5 +41,30 @@ public class BasicUserService {
         }
         em.getTransaction().commit();
         em.close();
+    }
+
+    public static void changePassword(UUID userId, String oldPassword, String newPassword) {
+        EntityManager em = JpaContext.createEntityManager();
+        em.getTransaction().begin();
+
+        User user = em.find(User.class, userId);
+        if (user != null && user.getPasswordHash().equals(oldPassword)) {
+            user.setPasswordHash(newPassword);
+            em.persist(user);
+        }
+        em.getTransaction().commit();
+        em.close();
+    }
+
+    public static List<User> listUsers() {
+        EntityManager em = JpaContext.createEntityManager();
+        try {
+            return em.createQuery(
+                    "SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.calendars",
+                    User.class)
+                    .getResultList();
+        } finally {
+            em.close();
+        }
     }
 }

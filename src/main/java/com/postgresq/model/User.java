@@ -1,6 +1,7 @@
-package calendarBack.src.main.java.com.postgresq.model;
+package com.postgresq.model;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,12 +24,11 @@ public class User {
     private String surname;
     private String email;
     private String passwordHash;
-    private LocalDate timezone;
+    private LocalDateTime timezone;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private List<Calendar> calendars;
+    private List<Calendar> calendars = new ArrayList<>();
 
-    // Getters and setters
     public UUID getId() {
         return id;
     }
@@ -69,33 +69,43 @@ public class User {
         this.passwordHash = passwordHash;
     }
 
-    public LocalDate getTimezone() {
+    public LocalDateTime getTimezone() {
         return timezone;
     }
 
-    public void setTimezone(LocalDate timezone) {
+    public void setTimezone(LocalDateTime timezone) {
         this.timezone = timezone;
     }
 
     public List<Calendar> getCalendars() {
-        return calendars;
+        return new ArrayList<>(calendars);
     }
 
     public void setCalendars(List<Calendar> calendars) {
-        this.calendars = calendars;
+        this.calendars = calendars != null ? new ArrayList<>(calendars) : new ArrayList<>();
     }
 
     public List<Calendar> addCalendars(Calendar calendar) {
-        this.calendars.add(calendar);
-        return this.calendars;
+        if (calendar != null && !calendars.contains(calendar)) {
+            this.calendars.add(calendar);
+        }
+        return calendars;
     }
 
     public List<Calendar> removeCalendars(Calendar calendar) {
-        this.calendars.remove(calendar);
-        return this.calendars;
+        if (calendar != null) {
+            this.calendars.remove(calendar);
+        }
+        return calendars;
     }
 
     public void removeAllCalendars() {
         this.calendars.clear();
+    }
+
+    @Override
+    public String toString() {
+        return "User[id=" + id + ", name=" + name + " " + surname + ", email=" + email
+                + ", timezone=" + timezone + ", calendars=" + calendars.size() + "]";
     }
 }

@@ -1,32 +1,27 @@
 package com.postgresq.service;
 
 import com.postgresq.model.*;
+import com.postgresq.persistence.JpaContext;
 
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.Persistence;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
-
-import io.micrometer.observation.Observation;
 
 public class BasicEventService {
 
-    private static final EntityManagerFactory emf = Persistence.createEntityManagerFactory("calendarPU");
-
     public static Event createEvent(String title, Optional<String> groupName, Optional<LocalDate> startDate, Optional<LocalDate> endDate, Optional<String> location, Optional<LocalDateTime> timezone) {
-        EntityManager em = emf.createEntityManager();
+        EntityManager em = JpaContext.createEntityManager();
         em.getTransaction().begin();
 
         Event event = new Event();
-        event.setId(UUID.randomUUID());
         event.setTitle(title);
         event.setGroupName(groupName.orElse(null));
-        event.setStartDate(startDate.orElse(null));
-        event.setEndDate(endDate.orElse(null));
+        event.setStartTime(startDate.orElse(null));
+        event.setEndTime(endDate.orElse(null));
         event.setLocation(location.orElse(null));
         event.setTimezone(timezone.orElse(LocalDateTime.now()));
 
@@ -36,25 +31,26 @@ public class BasicEventService {
         return event;
     }
 
-    public static Calendar createEventWithCalendar(UUID calendarId, String title, Optional<String> groupName, Optional<LocalDate> startDate, Optional<LocalDate> endDate, Optional<String> location, Optional<LocalDateTime> timezone) {
-        EntityManager em = emf.createEntityManager();
+    public static Event createEventWithCalendar(UUID calendarId, String title, Optional<String> groupName, Optional<LocalDate> startDate, Optional<LocalDate> endDate, Optional<String> location, Optional<LocalDateTime> timezone) {
+        EntityManager em = JpaContext.createEntityManager();
         em.getTransaction().begin();
 
         Event event = new Event();
-        event.setId(UUID.randomUUID());
         event.setTitle(title);
         event.setGroupName(groupName.orElse(null));
-        event.setStartDate(startDate.orElse(null));
-        event.setEndDate(endDate.orElse(null));
+        event.setStartTime(startDate.orElse(null));
+        event.setEndTime(endDate.orElse(null));
         event.setLocation(location.orElse(null));
         event.setTimezone(timezone.orElse(LocalDateTime.now()));
-        event.setCalendarId(calendarId);
 
         Calendar calendar = em.find(Calendar.class, calendarId);
-        if (calendar != null) {
-            calendar.addCalendarEvents(event);
-            em.persist(calendar);
+        if (calendar == null) {
+            em.getTransaction().rollback();
+            em.close();
+            throw new IllegalArgumentException("Calendar not found for id " + calendarId);
         }
+        event.setCalendar(calendar);
+        calendar.addCalendarEvents(event);
 
         em.persist(event);
         em.getTransaction().commit();
@@ -63,7 +59,7 @@ public class BasicEventService {
     }
 
     public static void addEventsToCalendar(UUID calendarId, List<UUID> eventsIUuids) {
-        EntityManager em = emf.createEntityManager();
+        EntityManager em = JpaContext.createEntityManager();
         em.getTransaction().begin();
 
         Calendar calendar = em.find(Calendar.class, calendarId);
@@ -83,7 +79,7 @@ public class BasicEventService {
     }
 
     public void removeEvent(UUID eventId, UUID calendarId) {
-        EntityManager em = emf.createEntityManager();
+        EntityManager em = JpaContext.createEntityManager();
         em.getTransaction().begin();
 
         Event event = em.find(Event.class, eventId);
@@ -97,5 +93,14 @@ public class BasicEventService {
         }
         em.getTransaction().commit();
         em.close();
+    }
+
+    public static List<Event> listEvents() {
+        EntityManager em = JpaContext.createEntityManager();
+        try {
+            return em.createQuery("SELECT e FROM Event e", Event.class).getResultList();
+        } finally {
+            em.close();
+        }
     }
 }

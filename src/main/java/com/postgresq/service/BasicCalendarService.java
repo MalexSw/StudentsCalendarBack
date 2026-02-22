@@ -1,23 +1,24 @@
 package com.postgresq.service;
 
-import com.postgresq.model.*;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.Persistence;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+
+import com.postgresq.model.Calendar;
+import com.postgresq.model.Event;
+import com.postgresq.model.User;
+import com.postgresq.persistence.JpaContext;
+
+import jakarta.persistence.EntityManager;
 
 public class BasicCalendarService {
 
-    private static final EntityManagerFactory emf = Persistence.createEntityManagerFactory("calendarPU");
-
     public static Calendar createCalendar(String title, Optional<LocalDateTime> timezone) {
-        EntityManager em = emf.createEntityManager();
+        EntityManager em = JpaContext.createEntityManager();
         em.getTransaction().begin();
 
         Calendar calendar = new Calendar();
-        calendar.setId(UUID.randomUUID());
         calendar.setTitle(title);
         calendar.setTimezone(timezone.orElse(LocalDateTime.now()));
 
@@ -28,15 +29,21 @@ public class BasicCalendarService {
     }
 
     public static Calendar createCalendarWithUser(String title, UUID userId, Optional<LocalDateTime> timezone) {
-        EntityManager em = emf.createEntityManager();
+        EntityManager em = JpaContext.createEntityManager();
         em.getTransaction().begin();
 
         Calendar calendar = new Calendar();
-        calendar.setId(UUID.randomUUID());
-        calendar.setUserId(userId);
         calendar.setTitle(title);
         calendar.setTimezone(timezone.orElse(LocalDateTime.now()));
 
+        User user = em.find(User.class, userId);
+        if (user == null) {
+            em.getTransaction().rollback();
+            em.close();
+            throw new IllegalArgumentException("User not found for id " + userId);
+        }
+        user.addCalendars(calendar);
+        calendar.setUser(user);
         em.persist(calendar);
         em.getTransaction().commit();
         em.close();
@@ -44,7 +51,7 @@ public class BasicCalendarService {
     }
 
     public static void addUserForCalendar(UUID userId, UUID calendarId) {
-        EntityManager em = emf.createEntityManager();
+        EntityManager em = JpaContext.createEntityManager();
         em.getTransaction().begin();
 
         User user = em.find(User.class, userId);
@@ -60,7 +67,7 @@ public class BasicCalendarService {
     }
 
     public static void addEventsToCalendar(UUID calendarId, List<UUID> eventsIUuids) {
-        EntityManager em = emf.createEntityManager();
+        EntityManager em = JpaContext.createEntityManager();
         em.getTransaction().begin();
 
         Calendar calendar = em.find(Calendar.class, calendarId);
@@ -79,8 +86,22 @@ public class BasicCalendarService {
         em.close();
     }
 
+    public static List<Calendar> listCalendars() {
+        EntityManager em = JpaContext.createEntityManager();
+        try {
+            return em.createQuery(
+                    "SELECT DISTINCT c FROM Calendar c "
+                            + "LEFT JOIN FETCH c.user "
+                            + "LEFT JOIN FETCH c.calendarEvents",
+                    Calendar.class)
+                    .getResultList();
+        } finally {
+            em.close();
+        }
+    }
+
     public void removeCalendar(UUID calendarId) {
-        EntityManager em = emf.createEntityManager();
+        EntityManager em = JpaContext.createEntityManager();
         em.getTransaction().begin();
 
         Calendar calendar = em.find(Calendar.class, calendarId);

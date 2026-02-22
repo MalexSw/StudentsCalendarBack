@@ -1,18 +1,17 @@
-package calendarBack.src.main.java.com.postgresq.model;
+package com.postgresq.model;
 
 import java.time.LocalDate;
-import java.time.Time;
-import java.util.List;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Column;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 @Entity
@@ -22,19 +21,19 @@ public class Event {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
+    @Column(name = "calendarId", insertable = false, updatable = false)
     private UUID calendarId;
     private String title;
     private String groupName;
     private LocalDate startTime;
     private LocalDate endTime;
     private String location;
-    private LocalDate timezone;
+    private LocalDateTime timezone;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "calendarId", nullable = false)
     private Calendar calendar;
 
-    // Getters and setters
     public UUID getId() {
         return id;
     }
@@ -91,11 +90,28 @@ public class Event {
         this.location = location;
     }
 
-    public LocalDate getTimezone() {
+    public LocalDateTime getTimezone() {
         return timezone;
     }
 
-    public void setTimezone(LocalDate timezone) {
+    public void setTimezone(LocalDateTime timezone) {
         this.timezone = timezone;
+    }
+
+    public Calendar getCalendar() {
+        return calendar;
+    }
+
+    public void setCalendar(Calendar calendar) {
+        this.calendar = calendar;
+        if (calendar != null) {
+            this.calendarId = calendar.getId();
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "Event[id=" + id + ", title=" + title + ", calendarId=" + calendarId + ", start=" + startTime
+                + ", end=" + endTime + ", location=" + location + "]";
     }
 }

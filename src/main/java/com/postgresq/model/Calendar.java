@@ -1,10 +1,14 @@
-package calendarBack.src.main.java.com.postgresq.model;
+package com.postgresq.model;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import com.postgresq.service.BasicService;
+
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -16,23 +20,24 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "calendars")
-public class Calendar {
+public class Calendar implements BasicService {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
+
+    @Column(name = "user_id", insertable = false, updatable = false)
     private UUID userId;
     private String title;
-    private LocalDate timezone;
+    private LocalDateTime timezone;
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @OneToMany(mappedBy = "calendar", cascade = CascadeType.ALL)
-    private List<Event> calendarEvents;
+    private List<Event> calendarEvents = new ArrayList<>();
 
-    // Getters and setters
     public UUID getId() {
         return id;
     }
@@ -65,19 +70,37 @@ public class Calendar {
         this.title = title;
     }
 
-    public LocalDate getTimezone() {
+    public LocalDateTime getTimezone() {
         return timezone;
     }
 
-    public void setTimezone(LocalDate timezone) {
+    public void setTimezone(LocalDateTime timezone) {
         this.timezone = timezone;
     }
 
     public List<Event> getCalendarEvents() {
-        return calendarEvents;
+        return new ArrayList<>(calendarEvents);
     }
 
     public void setCalendarEvents(List<Event> calendarEvents) {
-        this.calendarEvents = calendarEvents;
+        this.calendarEvents = calendarEvents != null ? new ArrayList<>(calendarEvents) : new ArrayList<>();
+    }
+
+    public void addCalendarEvents(Event event) {
+        if (event != null && !calendarEvents.contains(event)) {
+            this.calendarEvents.add(event);
+        }
+    }
+
+    public void removeCalendarEvents(List<Event> events) {
+        if (events != null) {
+            this.calendarEvents.removeAll(events);
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "Calendar[id=" + id + ", title=" + title + ", userId=" + userId + ", timezone=" + timezone
+                + ", events=" + calendarEvents.size() + "]";
     }
 }
