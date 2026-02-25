@@ -13,6 +13,7 @@ import com.DemoApplication;
 import com.model.Subject;
 import com.util.URLDecode;
 
+@org.springframework.context.annotation.Configuration
 public class apiInit {
 
     private static final Logger log = LoggerFactory.getLogger(DemoApplication.class);

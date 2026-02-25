@@ -6,6 +6,7 @@ package com.model;
 public class User implements Comparable<User> {
 
     private Integer id;
+    private String username;
     private String firstName;
     private String lastName;
     private String email;
@@ -15,8 +16,9 @@ public class User implements Comparable<User> {
     public User() {
     }
 
-    public User(Integer id, String firstName, String lastName, String email, String password) {
+    public User(Integer id, String username, String firstName, String lastName, String email, String password) {
         this.id = id;
+        this.username = username;
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
@@ -29,6 +31,14 @@ public class User implements Comparable<User> {
 
     public void setId(Integer id) {
         this.id = id;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public String getFirstName() {
@@ -78,7 +88,7 @@ public class User implements Comparable<User> {
 
     @Override
     public String toString() {
-        return "User [id=" + id + ", firstName=" + firstName + ", lastName=" + lastName
+        return "User [id=" + id + ", username=" + username + ", firstName=" + firstName + ", lastName=" + lastName
                 + ", email=" + email + ", password=" + password + ", calendarURL=" + calendarURL + "]";
     }
 }

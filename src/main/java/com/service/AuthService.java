@@ -9,9 +9,9 @@ import com.dto.AuthRegisterRequest;
 import com.dto.AuthRequest;
 import com.dto.AuthResponse;
 import com.model.User;
+import com.postgresq.service.BasicSecurityTokenService;
 import com.repository.UserRepository;
 import com.security.JwtUtil;
-import com.config.SecurityTokens;
 
 /**
  * Encapsulates authentication logic so controllers remain thin and readable.
@@ -38,6 +38,7 @@ public class AuthService {
     public AuthResponse register(AuthRegisterRequest request) {
         User newUser = new User();
         newUser.setEmail(request.getUsername());
+        newUser.setUsername(request.getUsername());
         newUser.setPassword(passwordEncoder.encode(request.getPassword()));
         newUser.setFirstName(request.getFirstName());
         newUser.setLastName(request.getLastName());
@@ -55,7 +56,7 @@ public class AuthService {
 
     private AuthResponse buildSuccessResponse(User user, String message) {
         String token = jwtUtil.generateToken(user.getEmail());
-        SecurityTokens.addToken(token);
+        BasicSecurityTokenService.addToken(token, user.getUsername());
         return new AuthResponse(token, user.getEmail(), message);
     }
 }

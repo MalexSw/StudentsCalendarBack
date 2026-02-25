@@ -8,9 +8,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.config.SecurityTokens;
 import com.dto.AuthedRequest;
 import com.model.User;
+import com.postgresq.service.BasicSecurityTokenService;
 import com.repository.UserRepository;
 
 /**
@@ -39,7 +39,7 @@ public class CalendarController {
         if (!userRepository.findByEmail(request.getUsername()).isPresent()) {
             throw new IllegalArgumentException("User not found");
         }
-        if (!SecurityTokens.isValidToken(request.getToken())) {
+        if (!BasicSecurityTokenService.isValidToken(request.getToken(), request.getUsername())) {
             throw new IllegalArgumentException("Invalid token");
         }
 

@@ -47,10 +47,20 @@ public final class DatabaseSeeder {
     private static void seedSampleData() {
         LocalDateTime now = LocalDateTime.now();
 
-        User alice = BasicUserService.createUser("Alice", "Miller", "alice@example.com", "alice-strong-pass",
-                Optional.of(now));
-        User bob = BasicUserService.createUser("Bob", "Harris", "bob@example.com", "bob-strong-pass",
-                Optional.of(now));
+        User alice = BasicUserService.createUser(
+            "alice",
+            "Alice",
+            "Miller",
+            "alice@example.com",
+            "alice-strong-pass",
+            Optional.of(now));
+        User bob = BasicUserService.createUser(
+            "bob",
+            "Bob",
+            "Harris",
+            "bob@example.com",
+            "bob-strong-pass",
+            Optional.of(now));
 
         Calendar aliceCalendar = BasicCalendarService.createCalendarWithUser(
                 "Alice Work Calendar",

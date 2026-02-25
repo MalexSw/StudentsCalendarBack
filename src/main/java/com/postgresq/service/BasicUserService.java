@@ -13,11 +13,12 @@ import jakarta.persistence.EntityManager;
 
 public class BasicUserService {
 
-    public static User createUser(String name, String surname, String email, String password, Optional<LocalDateTime> timezone) {
+    public static User createUser(String username, String name, String surname, String email, String password, Optional<LocalDateTime> timezone) {
         EntityManager em = JpaContext.createEntityManager();
         em.getTransaction().begin();
 
         User user = new User();
+        user.setUsername(username);
         user.setName(name);
         user.setSurname(surname);
         user.setEmail(email);

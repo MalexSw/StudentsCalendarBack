@@ -5,8 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import com.postgresq.service.BasicService;
-
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -20,7 +18,7 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "calendars")
-public class Calendar implements BasicService {
+public class Calendar {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

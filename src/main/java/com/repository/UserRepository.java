@@ -29,9 +29,9 @@ public class UserRepository {
     @PostConstruct
     void loadSampleUsers() {
         String hashed = passwordEncoder.encode("password123");
-        users.add(new User(idGenerator.incrementAndGet(), "Prem", "Tiwari", "prem@gmail.com", hashed));
-        users.add(new User(idGenerator.incrementAndGet(), "Vikash", "Kumar", "vikash@gmail.com", hashed));
-        users.add(new User(idGenerator.incrementAndGet(), "Ritesh", "Ojha", "ritesh@gmail.com", hashed));
+        users.add(new User(idGenerator.incrementAndGet(), "prem", "Prem", "Tiwari", "prem@gmail.com", hashed));
+        users.add(new User(idGenerator.incrementAndGet(), "vikash", "Vikash", "Kumar", "vikash@gmail.com", hashed));
+        users.add(new User(idGenerator.incrementAndGet(), "ritesh", "Ritesh", "Ojha", "ritesh@gmail.com", hashed));
     }
 
     public List<User> findAll() {

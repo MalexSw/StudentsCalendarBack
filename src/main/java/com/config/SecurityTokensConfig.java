@@ -2,7 +2,7 @@ package com.config;
 
 import java.util.List;
 
-public class SecurityTokens {
+public class SecurityTokensConfig {
 
     protected static List<String> tokens = new java.util.ArrayList<>();
 
