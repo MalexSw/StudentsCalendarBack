@@ -35,7 +35,8 @@ public class DemoApplication {
                     break;
 
                 case "seed-db":
-                    DatabaseSeeder.seedAndPrint();
+                    apiInit.initAPI();
+                    apiInit.getContext().getBean(DatabaseSeeder.class).seedAndPrint();
                     break;
 
                 case "stop-api":

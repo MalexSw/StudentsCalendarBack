@@ -3,107 +3,112 @@ package com.postgresq.tools;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.postgresq.model.Calendar;
 import com.postgresq.model.Event;
 import com.postgresq.model.User;
-import com.postgresq.persistence.JpaContext;
-import com.postgresq.service.BasicCalendarService;
-import com.postgresq.service.BasicEventService;
-import com.postgresq.service.BasicUserService;
+import com.postgresq.repository.PgCalendarRepository;
+import com.postgresq.repository.PgEventRepository;
+import com.postgresq.repository.PgUserRepository;
 
-import jakarta.persistence.EntityManager;
+@Service
+public class DatabaseSeeder {
 
-public final class DatabaseSeeder {
+    private final PgUserRepository userRepository;
+    private final PgCalendarRepository calendarRepository;
+    private final PgEventRepository eventRepository;
 
-    private DatabaseSeeder() {
+    public DatabaseSeeder(PgUserRepository userRepository, PgCalendarRepository calendarRepository, PgEventRepository eventRepository) {
+        this.userRepository = userRepository;
+        this.calendarRepository = calendarRepository;
+        this.eventRepository = eventRepository;
     }
 
-    public static void seedAndPrint() {
+    @Transactional
+    public void seedAndPrint() {
         cleanDatabase();
         seedSampleData();
         printDatabaseSnapshot();
     }
 
-    private static void cleanDatabase() {
-        EntityManager em = JpaContext.createEntityManager();
-        try {
-            em.getTransaction().begin();
-            em.createQuery("DELETE FROM Event").executeUpdate();
-            em.createQuery("DELETE FROM Calendar").executeUpdate();
-            em.createQuery("DELETE FROM User").executeUpdate();
-            em.getTransaction().commit();
-        } catch (RuntimeException ex) {
-            if (em.getTransaction().isActive()) {
-                em.getTransaction().rollback();
-            }
-            throw ex;
-        } finally {
-            em.close();
-        }
+    private void cleanDatabase() {
+        // delete in FK-safe order
+        eventRepository.deleteAll();
+        calendarRepository.deleteAll();
+        userRepository.deleteAll();
     }
 
-    private static void seedSampleData() {
+    private void seedSampleData() {
         LocalDateTime now = LocalDateTime.now();
 
-        User alice = BasicUserService.createUser(
-            "alice",
-            "Alice",
-            "Miller",
-            "alice@example.com",
-            "alice-strong-pass",
-            Optional.of(now));
-        User bob = BasicUserService.createUser(
-            "bob",
-            "Bob",
-            "Harris",
-            "bob@example.com",
-            "bob-strong-pass",
-            Optional.of(now));
+        User alice = new User();
+        alice.setUsername("alice");
+        alice.setName("Alice");
+        alice.setSurname("Miller");
+        alice.setEmail("alice@example.com");
+        alice.setPasswordHash("alice-strong-pass");
+        alice.setTimezone(now);
+        alice = userRepository.save(alice);
 
-        Calendar aliceCalendar = BasicCalendarService.createCalendarWithUser(
-                "Alice Work Calendar",
-                alice.getId(),
-                Optional.of(now.plusDays(1)));
+        User bob = new User();
+        bob.setUsername("bob");
+        bob.setName("Bob");
+        bob.setSurname("Harris");
+        bob.setEmail("bob@example.com");
+        bob.setPasswordHash("bob-strong-pass");
+        bob.setTimezone(now);
+        bob = userRepository.save(bob);
 
-        Calendar bobCalendar = BasicCalendarService.createCalendarWithUser(
-                "Bob Personal Calendar",
-                bob.getId(),
-                Optional.of(now.plusDays(2)));
+        Calendar aliceCalendar = new Calendar();
+        aliceCalendar.setTitle("Alice Work Calendar");
+        aliceCalendar.setTimezone(now.plusDays(1));
+        aliceCalendar.setUser(alice);
+        aliceCalendar = calendarRepository.save(aliceCalendar);
 
-        BasicEventService.createEventWithCalendar(
-                aliceCalendar.getId(),
-                "Daily Standup",
-                Optional.of("Team Sync"),
-                Optional.of(LocalDate.now().plusDays(1)),
-                Optional.of(LocalDate.now().plusDays(1)),
-                Optional.of("Zoom"),
-                Optional.of(now.plusDays(1)));
+        Calendar bobCalendar = new Calendar();
+        bobCalendar.setTitle("Bob Personal Calendar");
+        bobCalendar.setTimezone(now.plusDays(2));
+        bobCalendar.setUser(bob);
+        bobCalendar = calendarRepository.save(bobCalendar);
 
-        BasicEventService.createEventWithCalendar(
-                aliceCalendar.getId(),
-                "Design Review",
-                Optional.of("Product"),
-                Optional.of(LocalDate.now().plusDays(2)),
-                Optional.of(LocalDate.now().plusDays(2)),
-                Optional.of("Conference Room B"),
-                Optional.of(now.plusDays(2)));
+        Event standup = new Event();
+        standup.setTitle("Daily Standup");
+        standup.setGroupName("Team Sync");
+        standup.setStartTime(LocalDate.now().plusDays(1));
+        standup.setEndTime(LocalDate.now().plusDays(1));
+        standup.setLocation("Zoom");
+        standup.setTimezone(now.plusDays(1));
+        standup.setCalendar(aliceCalendar);
+        eventRepository.save(standup);
 
-        BasicEventService.createEventWithCalendar(
-                bobCalendar.getId(),
-                "Family Brunch",
-                Optional.of("Personal"),
-                Optional.of(LocalDate.now().plusDays(3)),
-                Optional.of(LocalDate.now().plusDays(3)),
-                Optional.of("Sunrise Cafe"),
-                Optional.of(now.plusDays(3)));
+        Event review = new Event();
+        review.setTitle("Design Review");
+        review.setGroupName("Product");
+        review.setStartTime(LocalDate.now().plusDays(2));
+        review.setEndTime(LocalDate.now().plusDays(2));
+        review.setLocation("Conference Room B");
+        review.setTimezone(now.plusDays(2));
+        review.setCalendar(aliceCalendar);
+        eventRepository.save(review);
+
+        Event brunch = new Event();
+        brunch.setTitle("Family Brunch");
+        brunch.setGroupName("Personal");
+        brunch.setStartTime(LocalDate.now().plusDays(3));
+        brunch.setEndTime(LocalDate.now().plusDays(3));
+        brunch.setLocation("Sunrise Cafe");
+        brunch.setTimezone(now.plusDays(3));
+        brunch.setCalendar(bobCalendar);
+        eventRepository.save(brunch);
     }
 
-    private static void printDatabaseSnapshot() {
-        List<User> users = BasicUserService.listUsers();
-        List<Calendar> calendars = BasicCalendarService.listCalendars();
-        List<Event> events = BasicEventService.listEvents();
+    private void printDatabaseSnapshot() {
+        List<User> users = userRepository.findAll();
+        List<Calendar> calendars = calendarRepository.findAll();
+        List<Event> events = eventRepository.findAll();
 
         System.out.println("\n--- Calendar Database Snapshot ---");
         System.out.printf("Users (%d):%n", users.size());

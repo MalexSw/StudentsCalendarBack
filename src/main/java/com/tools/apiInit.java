@@ -29,6 +29,10 @@ public class apiInit {
         }
     }
 
+    public static ConfigurableApplicationContext getContext() {
+        return context;
+    }
+
     // Call this to stop the API if needed
     public static void stopAPI() {
         if (context != null) {
